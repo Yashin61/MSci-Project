@@ -6,7 +6,7 @@ All movements are forward diagonal in one square length, except for a king which
 Doing a possible capture right after capturing one is not allowed, again except for a king.
 Finally, the winner will be the one whose opponent does not have any stones left to play or does not have any legal movements to do.
 There will be an option for choosing "Force Jump". Force Jump means if there is an opportunity to capture a piece, the player must do that.
-The game can be played in 5 different levels: Easy, Not So Easy, Normal, Not So Hard, Hard. There are also options to make the game working under three different core algorithms: Minimax, Minimax with Alpha-Beta Pruning and A* Search.
+The game can be played in 5 different levels: Easy, Not So Easy, Normal, Not So Hard, Hard. There are also options to make the game working under three different core algorithms: Minimax, Minimax with Alpha-beta Pruning and A* Search.
 The game is always played vs computer, named Smart-Friend. The opponent's pieces are not possible to be touched by the human player.
 The human player can choose to play first or not, and in white or black. The player is asked to enter a name before start playing.
 

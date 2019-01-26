@@ -1,167 +1,150 @@
 package algorithms;
-//import logic.Move;
-import ui.Board;
-import java.util.ArrayList;
-import java.util.Arrays;
+import logic.GameLogic;
+import logic.Move;
 import java.util.List;
 
-public class Minimax
+public class Minimax extends Algorithm
 {
-    private Board.color color;
-    private Board.color oppColor;
-//    private Tree descisionTree;
-    private Move lastMove;
-    private Board node;
-    private Move move;
-    private int score;
-    private ArrayList<gameLogic.Tree> children;
+	public Minimax()
+	{
+		super("Minimax");
+	}
 
-    public Minimax(Board.color color, Board node, Move move, int score, Minimax ... children)
+    public Move getAIMove(GameLogic gl, int depth)	//picking and returning a move from all possible moves based on current state of board
     {
-        this.node = node;
-        this.score = score;
-        this.move = move;
-        this.children = new ArrayList<>(Arrays.asList(children));
-        this.color = color;
+    	List<Move> moves = gl.getAllMoves();
+		float[] scores = new float[moves.size()];
+		int maxScoreIndex = 0;
+		int i = 0;
 
-        if(color == Board.color.RED)
-            oppColor = Board.color.BLACK;
-        else
-            oppColor = Board.color.RED;
+		for(Move move : moves)
+		{
+			GameLogic moved = new GameLogic(gl, move);	//getting a copy of the board and making the current move in the copy
+			scores[i] = getScore(moved, depth, gl.isKingMove);
+
+			if(scores[i] > scores[maxScoreIndex])
+				maxScoreIndex = i;	//keeping track of the best move
+
+			i++;
+		}
+
+		return moves.get(maxScoreIndex);
+//		System.out.println(Arrays.toString(scores));
     }
 
-//    public Board.color getColor() { return color; } // returning the color of opponent as computer
+	private float getScore(GameLogic gl, int depth, boolean maxing)
+	{
+		List<Move> moves = gl.getAllMoves();
 
-    private Board getBoard() { return node; }  // returning board of tree
+		if(depth == 0)
+			return maxing ? gl.getCurrentPlayerScore() : -gl.getCurrentPlayerScore();
+		if(gl.isKingMove)
+			depth++;
+		if(moves.size() == 0)	//if no moves i.e. no pieces or blocked, then current player loses
+			return maxing ? -13 : 13;
+		if(maxing)	//maximising
+		{
+			float best = -12;
 
-    private Move getMove() { return move; }   // returning move of tree
+			for(Move move : moves)
+			{
+				float score = getScore(new GameLogic(gl, move), depth-1, gl.isKingMove);
+				best = Math.max(best, score);
+			}
 
-    private int getScore() { return score; }   // returning score of tree
+			return best;
+		}
+		else	//minimising
+		{
+			float best = 12;
 
-    private List<Minimax> getChildren() { return children; }   // returning tree's children
+			for(Move move : moves)
+			{
+				float score = getScore(new GameLogic(gl, move), depth-1, !gl.isKingMove);
+				best = Math.min(best, score);
+			}
 
-    private int getNumChildren() { return children.size(); }   // returning number of children of tree
+			return best;
+		}
+	}
 
-    private void setScore(int newVal) {score = newVal; }  // changing score of tree by newVal
-
-    private Minimax getChild(int index) { return children.get(index); }   // returning a child at chosen index
-
-    private void addChild(Minimax child) { children.add(child); }    // adding child to the tree
-
-    private void addChildren(Minimax ... children)  // adding multiple children to tree
-    {
-        for(Minimax child : children)
-            addChild(child);
-    }
-
-    private Move getAIMove(Board board)  // picking and returning a move from all possible moves based on current state of board
-    {
-        descisionTree = makeDescisionTree(board);
-        lastMove = pickMove();
-        return lastMove;
-    }
-
-    /*
-    creating a tree with four layers with all possible moves for the next three moves of the game. "board" is the state
-    the tree will be based on. returning a tree with all possible moves
-    */
-    private Minimax makeDescisionTree(Board board)
-    {
-        Minimax mainTree = new Minimax(board, null, score(board));
-        ArrayList<Move> moves;
-
-        if(board.isJumped())    // handling multiple jumps
-            moves = board.getJumps(lastMove.movRow, lastMove.movCol);
-        else
-            moves = board.getAllLegalMovesForColor(color);
-
-        for(Move move : moves)  // making second layer
-        {
-            Board temp = copyBoard(board);
-            temp.movePiece(move);
-            temp.handleJump(move);
-            Minimax firstLayer = new Minimax(temp, move, score(temp));
-            ArrayList<Move> secondMoves = temp.getAllLegalMovesForColor(oppColor);
-
-            for(Move sMove : secondMoves)   // making third layer
-            {
-                Board temp2 = copyBoard(temp);
-                temp2.movePiece(sMove);
-                temp2.handleJump(sMove);
-                Minimax secondLayer = new Minimax(temp2, sMove, score(temp2));
-                ArrayList<Move> thirdMoves = temp2.getAllLegalMovesForColor(color);
-
-                for(Move tMove : thirdMoves)    // making fourth layer
-                {
-                    Board temp3 = copyBoard(temp2);
-                    temp3.movePiece(tMove);
-                    temp3.handleJump(tMove);
-                    secondLayer.addChild(new Minimax(temp3, tMove, score(temp3)));
-                }
-
-                firstLayer.addChild(secondLayer);
-            }
-
-            mainTree.addChild(firstLayer);
-        }
-
-        return mainTree;
-    }
-
-    private Move pickMove() // returning selected move
-    {
-        int max = -13;
-        int index = 0;
-
-        for(int i = 0; i < descisionTree.getNumChildren(); i++)
-        {
-            Minimax child = descisionTree.getChild(i);
-            int smin = 13;
-
-            for(Minimax sChild : child.getChildren())   // finding max leaf
-            {
-                int tMax = -13;
-
-                for(Minimax tchild : sChild.getChildren())
-                {
-                    if(tchild.getScore() >= tMax)
-                        tMax = tchild.getScore();
-                }
-
-                sChild.setScore(tMax);
-
-                if(sChild.getScore() <= smin)   // finding min in the third layer
-                    smin = sChild.getScore();
-            }
-
-            child.setScore(smin);
-
-            if(child.getScore() >= max) // finding max in the second layer and saving index
-            {
-                max = child.getScore();
-                index = i;
-            }
-        }
-
-        return descisionTree.getChild(index).getMove();
-    }
-
-    private int score(Board board)  // scoring the given board based on a weighted system
-    {
-        if(color == Board.color.RED)
-            return board.getRedWeightedScore() - board.getBlackWeightedScore();
-        else
-            return board.getRedWeightedScore() - board.getRedWeightedScore();
-    }
-
-    private Board copyBoard(board board)    // creating new board with the same information as the given board
-    {
-        Board.color[][] color = new board.color[8][8];
-
-        for(int row = 0; row < 8; row++)
-            for(int col = 0; col < 8; col++)
-                color[row][col] = board.getInfoAtPosition(row, col);
-
-        return new Board(color, board.getNumRed(), board.getNumBlack(), board.getNumRedKing(), board.getNumBlackKing());
-    }
+	//another version of Minimax which is not as nice as the above one
+//	private static int getScore(BoardUI board, int depth)
+//	{
+//		List<Move> moves = board.getAllMoves();
+//
+//		if(depth == MAX_DEPTH)
+//    	{
+//    		int score = board.getCurrentPlayerScore();
+//
+//    		if(depth % 2 == 0)
+//    			return -score;
+//
+//    		return score;
+//		}
+//    	else
+//    	{
+//    		if(board.isKingMove)
+//    			depth--;
+//    		if(moves.size() == 0)
+//    			return depth % 2 == 0 ? -10 : 10;
+//
+//    		int[] scores = new int[moves.size()];
+//    		int i = 0;
+//    		int maxScoreIndex = 0;
+//
+//    		for(Move move : moves)
+//    		{
+//    			scores[i] = getScore(new BoardUI(board, move), depth+1);
+//
+//    			if(depth%2 == 0)
+//    				scores[i] = -scores[i];
+//    			if(scores[i] > scores[maxScoreIndex])
+//    				maxScoreIndex = i;
+//
+//    			i++;
+//			}
+//
+//    		if(depth%2 == 0)
+//    			return -scores[maxScoreIndex];
+//
+//    		return scores[maxScoreIndex];
+//		}
+//	}
+//
+//	private static int getScore(BoardUI board, int depth, boolean maxing)
+//	{
+//		List<Move> moves = board.getAllMoves();
+//
+//		if(depth == 0)
+//    		return maxing ? board.getCurrentPlayerScore() : -board.getCurrentPlayerScore();
+//    	if(board.isKingMove)
+//    		depth++;
+//    	if(moves.size() == 0)
+//    		return maxing ? 12 : -12;
+//    	if(maxing)	//maximising
+//    	{
+//    		int best = -12;
+//
+//    		for(Move move : moves)
+//    		{
+//    			int score = getScore(new BoardUI(board, move), depth-1, board.isKingMove);
+//    			best = Math.max(best, score);
+//			}
+//
+//    		return best;
+//		}
+//    	else	//minimising
+//    	{
+//    		int best = 12;
+//
+//    		for(Move move : moves)
+//    		{
+//    			int score = getScore(new BoardUI(board, move), depth-1, !board.isKingMove);
+//    			best = Math.min(best, score);
+//			}
+//
+//    		return best;
+//		}
+//	}
 }
