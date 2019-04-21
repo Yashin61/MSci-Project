@@ -3,8 +3,8 @@ import ui.BoardUI;
 
 public class Move
 {
-	int colFrom, rowFrom, colTo, rowTo;	//why not private???
-	boolean isJump;	//why not private???
+	private int colFrom, rowFrom, colTo, rowTo;
+	private boolean isJump;
 
 	public Move(int colFrom, int rowFrom, int colTo, int rowTo, boolean isJump)
 	{
@@ -21,11 +21,36 @@ public class Move
 		gl.makeMove(colTo, rowTo, colFrom, rowFrom, repaint);
 
 		if(repaint)
-			new Thread(()->BoardUI.instance.repaint()).start();
+			new Thread(() -> BoardUI.getInstance().repaint()).start();
 	}
 
 	void makeMove(GameLogic gl)
 	{
 		makeMove(gl, false);
+	}
+
+	public boolean isJump()
+	{
+		return isJump;
+	}
+
+	public int getColFrom()
+	{
+		return colFrom;
+	}
+
+	public int getRowFrom()
+	{
+		return rowFrom;
+	}
+
+	public int getColTo()
+	{
+		return colTo;
+	}
+
+	public int getRowTo()
+	{
+		return rowTo;
 	}
 }
