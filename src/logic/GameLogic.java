@@ -4,6 +4,7 @@ import ui.BoardUI;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,6 +27,8 @@ public class GameLogic
 	private Algorithm algorithm;
 	public Move lastMove;
 	private boolean hasJump = false;
+	public List<List<UndoMove>> undoMoves;
+
 
 	public enum Piece
 	{
@@ -123,6 +126,7 @@ public class GameLogic
 		player1 = player;
 		this.playFirst = playFirst;
 		this.forceJump = forceJump;
+		this.undoMoves = new ArrayList<>();
 		initializeBoard();
 	}
 
@@ -135,6 +139,7 @@ public class GameLogic
 
 		currentPlayer = gl.currentPlayer;
 		isKingMove = gl.isKingMove;
+		undoMoves = gl.undoMoves;
 		m.makeMove(this);
 	}
 
@@ -295,7 +300,19 @@ public class GameLogic
 		}
 	}
 
-	public void undo() { }
+	public void undo()
+	{
+		ArrayList<UndoMove> lastMoves = (ArrayList<UndoMove>)undoMoves.get(undoMoves.size()-1);
+
+		for(int i = 0; i<lastMoves.size();i++)
+		{
+			int col = lastMoves.get(i).getCol();
+			int row = lastMoves.get(i).getRow();
+			Piece type = lastMoves.get(i).getType();
+			gameData[col][row] = type;
+			swapPlayer();
+		}
+	}
 
 	private void swapPlayer()
 	{
@@ -310,6 +327,9 @@ public class GameLogic
 		lastMove = new Move(storedCol, storedRow, col, row, false);
 		gameData[col][row] = gameData[storedCol][storedRow];
 		gameData[storedCol][storedRow] = null;	//making old piece empty
+		ArrayList addToUndo = new ArrayList<UndoMove>();
+		addToUndo.add(new UndoMove(storedRow, storedCol, gameData[storedCol][storedRow])); //before
+		addToUndo.add(new UndoMove(col, row, gameData[col][row])); //after
 
 		if(!gameData[col][row].isKing())
 		{
@@ -357,6 +377,8 @@ public class GameLogic
 				nextMove(useAI);
 			}
 		}
+
+		this.undoMoves.add(addToUndo);
 	}
 
 	private boolean canMove()
