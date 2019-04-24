@@ -5,13 +5,13 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-public class BoardUI extends JPanel implements MouseListener
+public class BoardUI extends JPanel implements MouseListener	//it is a panel and listen for inputs through mouse click
 {
-	private static BoardUI instance;	//for singleton design pattern
+	private static BoardUI instance;	//for the purpose of singleton design pattern
 	private static final double GOLDEN_RATIO = 1.618;
 	private static GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 	private static int monitorHeight = gd.getDisplayMode().getHeight();
-	private static int width = ((int)Math.round(monitorHeight / GOLDEN_RATIO) / 8) * 8;
+	private static int width = ((int)Math.round(monitorHeight / GOLDEN_RATIO) / 8) * 8;	//avoids having a gap in the right side of the board
 	private static int height = width;
 	public static final int TILE_SIZE = width / GameLogic.NUM_TILES_PER_ROW;
 	private GameLogic gl;
@@ -51,10 +51,10 @@ public class BoardUI extends JPanel implements MouseListener
 		int col = (evt.getX() - 8) / TILE_SIZE;	//8 is left frame length
 		int row = (evt.getY() - 30) / TILE_SIZE;	//30 is top frame length
 		gl.mousePressed(col, row);
-		new Thread(()->repaint()).start();
+		new Thread(() -> repaint()).start();
 	}
 
-	private void window(int width, int height, BoardUI b)
+	private void window(int width, int height, BoardUI b)	//it creates a window with preferred size
 	{
 		this.setPreferredSize(new Dimension(width, height));
 	}
@@ -65,7 +65,7 @@ public class BoardUI extends JPanel implements MouseListener
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		for(int row = 0; row < GameLogic.NUM_TILES_PER_ROW; row++)
+		for(int row = 0; row < GameLogic.NUM_TILES_PER_ROW; row++)	//looping through all tiles
 		{
 			for(int col = 0; col < GameLogic.NUM_TILES_PER_ROW; col++)
 			{
@@ -81,7 +81,7 @@ public class BoardUI extends JPanel implements MouseListener
 
 				g2d.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-				if(gl.availablePlays[col][row] != 0)	//Draw available moves
+				if(gl.availablePlays[col][row] != 0)	//draw available moves
 				{
 					g.setColor(MOVE);
 					g.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -91,7 +91,7 @@ public class BoardUI extends JPanel implements MouseListener
 					g.setColor(PREVIOUS);
 					g2d.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 				}
-				if(gl.gameData[col][row] != null)	//Draw pieces
+				if(gl.gameData[col][row] != null)	//draw pieces
 					gl.gameData[col][row].drawPiece(g2d, col*TILE_SIZE, row*TILE_SIZE, gl.isSelected(col, row));
 			}
 		}

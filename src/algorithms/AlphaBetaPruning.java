@@ -3,7 +3,6 @@ import logic.GameLogic;
 import logic.Move;
 import java.util.List;
 
-//Alpha-Beta Pruning and Minimax both should end up with same results but in different durations. For Alpha-Beta Pruning, it is beneficial to check moves that are likely better first. This allows to prune more of the subtree
 public class AlphaBetaPruning extends Algorithm
 {
 	public AlphaBetaPruning()
@@ -11,7 +10,7 @@ public class AlphaBetaPruning extends Algorithm
 		super("Alpha-Beta Pruning");
 	}
 
-	public Move getAIMove(GameLogic gl, int depth)  // picking and returning a move from all possible moves based on current state of board
+	public Move getAIMove(GameLogic gl, int depth)  //picking and returning a move from all possible moves based on the current state of the board
 	{
 		List<Move> moves = gl.getAllMoves();
 
@@ -21,8 +20,8 @@ public class AlphaBetaPruning extends Algorithm
 		float[] scores = new float[moves.size()];
 		int maxScoreIndex = 0;
 		int i = 0;
-		float alpha = Float.NEGATIVE_INFINITY;
-		float beta = Float.POSITIVE_INFINITY;	//beta keeps track of minimising my chance. Whenever it's maximising, alpha gets updated
+		float alpha = Float.NEGATIVE_INFINITY;	//alpha keeps track of max score
+		float beta = Float.POSITIVE_INFINITY;	//beta keeps track of mini score
 
 		for(Move move : moves)
 		{
@@ -57,7 +56,7 @@ public class AlphaBetaPruning extends Algorithm
 			{
 				float score = getScore(new GameLogic(gl, move), depth-1, gl.isKingMove, alpha, beta);
 				best = Math.max(best, score);
-				alpha = Math.max(alpha, score);
+				alpha = Math.max(alpha, score);	//update alpha with maximum value
 
 				if(beta <= alpha)
 					break;
@@ -73,7 +72,7 @@ public class AlphaBetaPruning extends Algorithm
 			{
 				float score = getScore(new GameLogic(gl, move), depth-1, !gl.isKingMove, alpha, beta);
 				best = Math.min(best, score);
-				beta = Math.min(beta, score);
+				beta = Math.min(beta, score);	//update beta with the minimum value
 
 				if(beta <= alpha)
 					break;

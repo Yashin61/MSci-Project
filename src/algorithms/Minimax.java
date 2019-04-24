@@ -10,14 +10,14 @@ public class Minimax extends Algorithm
 		super("Minimax");
 	}
 
-    public Move getAIMove(GameLogic gl, int depth)	//picking and returning a move from all possible moves based on current state of board
+    public Move getAIMove(GameLogic gl, int depth)	//picking and returning a move from all possible moves based on the current state of board
     {
     	List<Move> moves = gl.getAllMoves();
 		float[] scores = new float[moves.size()];
 		int maxScoreIndex = 0;
 		int i = 0;
 
-		for(Move move : moves)
+		for(Move move : moves)	//for each move, it does the mini-max
 		{
 			GameLogic moved = new GameLogic(gl, move);	//getting a copy of the board and making the current move in the copy
 			scores[i] = getScore(moved, depth, gl.isKingMove);

@@ -14,12 +14,12 @@ public class GameLogic
 {
 	public static final int NUM_TILES_PER_ROW = 8; 	//8 tiles for each row and column
 	public Piece[][] gameData = new Piece[NUM_TILES_PER_ROW][NUM_TILES_PER_ROW];	//storing piece data in the board
-	private Player currentPlayer;
-	private Player player1 = Player.RED;
-	private boolean isSelected = false;	//indicating if there is a moving function processing
+	private Player currentPlayer;	//whose turn is it
+	private Player player1 = Player.RED;	//playing first
+	private boolean isSelected = false;	//if a piece is selected
 	private boolean playFirst;
 	public int[][] availablePlays = new int[NUM_TILES_PER_ROW][NUM_TILES_PER_ROW];	//storing available plays in the board
-	private int storedRow, storedCol;
+	private int storedRow, storedCol; //which tile is currently selected
 	public boolean isKingMove = false;
 	private boolean bothAI = false;
 	private int difficulty = 0;
@@ -30,7 +30,7 @@ public class GameLogic
 	public List<List<UndoMove>> undoMoves;
 
 
-	public enum Piece
+	public enum Piece	//lists all the possible values of all specific types
 	{
 		RED(1), RED_KING(1.5f), BLUE(1), BLUE_KING(1.5f);
 
@@ -39,7 +39,7 @@ public class GameLogic
 			this.value = value;
 		}
 
-		public Player getPlayer()
+		public Player getPlayer()	//returns which player the selected piece belongs to
 		{
 			if(this == RED || this == RED_KING)
 				return Player.RED;
@@ -107,7 +107,7 @@ public class GameLogic
 			this.color = c;
 		}
 
-		public Player getOpposite()
+		public Player getOpposite()	//calling on Red, it gives Blue and vice versa
 		{
 			if(this == RED)
 				return BLUE;
@@ -130,7 +130,7 @@ public class GameLogic
 		initializeBoard();
 	}
 
-	public GameLogic(GameLogic gl, Move m)	//background simulation
+	public GameLogic(GameLogic gl, Move m)	//for background simulation (it makes the run of the game efficient)
 	{
 		gameData = new Piece[NUM_TILES_PER_ROW][];
 
@@ -151,7 +151,7 @@ public class GameLogic
 			for(int row = 0; row < NUM_TILES_PER_ROW; row++)
 				gameData[col][row] = null;
 
-		for(int col = 0; col < NUM_TILES_PER_ROW; col++)
+		for(int col = 0; col < NUM_TILES_PER_ROW; col++)	//puts appropriate pieces in the appropriate squares
 		{
 			if(col%2 == 0)	//even
 			{
@@ -214,7 +214,7 @@ public class GameLogic
 			return;
 		if((!isSelected && gameData[col][row] != null) || (isSelected && checkTeamPiece(col, row)))
 		{
-			if(!isKingMove || gameData[col][row].isKing()) //If we are dealing with a king move
+			if(!isKingMove || gameData[col][row].isKing()) //if we are dealing with a king move
 			{
 				resetPlay();
 				storedCol = col;
@@ -233,13 +233,13 @@ public class GameLogic
 				isKingMove = false;
 			}
 		}
-		else if(isSelected && availablePlays[col][row] != 0)
+		else if(isSelected && availablePlays[col][row] != 0)	//if a piece is selected and there is an available move for it, move
 			makeMove(col, row, storedCol, storedRow, true);
-		else if(isSelected && availablePlays[col][row] == 0)
+		else if(isSelected && availablePlays[col][row] == 0)	//if clicked on blank space, then deselect
 			resetPlay();
 	}
 
-	private void resetPlay()
+	private void resetPlay()	//deselects
 	{
 		storedCol = 0;
 		storedRow = 0;
@@ -252,9 +252,8 @@ public class GameLogic
 
 	private void makeAIMove()
 	{
+		//it does not hang the program while the AI calculates
 		new Thread(() -> {
-//				long start = System.currentTimeMillis();
-//				Move m = Minimax.getAIMove(this);
 			try
 			{
 				Thread.sleep(100);
@@ -265,13 +264,11 @@ public class GameLogic
 			}
 
 			Move m = algorithm.getAIMove(this, difficulty);
-//				long end = System.currentTimeMillis();
-//				System.out.println(end-start);
 			m.makeMove(this, true);
-		}).start();  //dosent hang the prog
+		}).start();
 	}
 
-	private void nextMove(boolean useAI)
+	private void nextMove(boolean useAI)	//checks weather the AI needs to play
 	{
 		hasJump = false;
 		List<Move> moves = getAllMoves();
@@ -328,40 +325,41 @@ public class GameLogic
 		gameData[col][row] = gameData[storedCol][storedRow];
 		gameData[storedCol][storedRow] = null;	//making old piece empty
 		ArrayList addToUndo = new ArrayList<UndoMove>();
-		addToUndo.add(new UndoMove(storedRow, storedCol, gameData[storedCol][storedRow])); //before
-		addToUndo.add(new UndoMove(col, row, gameData[col][row])); //after
+		addToUndo.add(new UndoMove(storedRow, storedCol, gameData[storedCol][storedRow]));	//before
+		addToUndo.add(new UndoMove(col, row, gameData[col][row]));	//after
 
 		if(!gameData[col][row].isKing())
 		{
-			if(gameData[col][row].getPlayer() == Player.RED && row == 0)
+			if(gameData[col][row].getPlayer() == Player.RED && row == 0)	//checking for the last raw to turn the piece to king in correct colour
 				gameData[col][row] = Piece.RED_KING;
 			else if(gameData[col][row].getPlayer() == Player.BLUE && row == 7)
 				gameData[col][row] = Piece.BLUE_KING;
 		}
-		if(availablePlays[col][row] == 2)
+		if(availablePlays[col][row] == 2)	//if it is a jump move, then remove the piece. (1 is a normal move)
 		{
 			removePiece(col, row, storedCol, storedRow);
 
-			if(gameData[col][row].isKing())
+			if(gameData[col][row].isKing())	//if the piece just moved is a king, then see for other moves and capturing
 			{
 				resetPlay();
 				getAvailablePlays(col, row, availablePlays);
-				isKingMove = canMove();
+				isKingMove = canMove();	//keep it as a king move
 			}
 			else
 				isKingMove = false;
 		}
 		else
 			isKingMove = false;
-		if(!isKingMove)	//end of move, go to next move
+		//end of move
+		if(!isKingMove)
 		{
 			resetPlay();
-			swapPlayer();
+			swapPlayer();	//not a king move, then swap the players
 			nextMove(useAI);
 		}
-		else
+		else	//a king move, then check for available jumps
 		{
-			if(isJumpAvailable())
+			if(isJumpAvailable())	//keep the same player and make the jump
 			{
 				resetPlay();
 				isSelected = true;
@@ -381,7 +379,7 @@ public class GameLogic
 		this.undoMoves.add(addToUndo);
 	}
 
-	private boolean canMove()
+	private boolean canMove()	//says whether a player can move or not
 	{
 		for(int row = 0; row < NUM_TILES_PER_ROW; row++)
 			for(int col = 0; col < NUM_TILES_PER_ROW; col++)
@@ -487,7 +485,7 @@ public class GameLogic
 		gameData[pieceCol][pieceRow] = null;
 	}
 
-	private int getUp(int col, int row, int[][] plays)	//getting up availability
+	private int getUp(int col, int row, int[][] plays)	//for Red pieces
 	{
 		if(row == 0)
 			return 0;
@@ -499,7 +497,7 @@ public class GameLogic
 		{
 			if(!isLegalPos(currentCol, currentRow))
 				continue;
-			if(gameData[currentCol][currentRow] == null)
+			if(gameData[currentCol][currentRow] == null)	//if it is empty, then the piece can go there
 			{
 				if(!forceJump || !hasJump)
 				{
@@ -513,7 +511,7 @@ public class GameLogic
 
 				if(jumpPos != null)
 				{
-					plays[jumpPos[0]][jumpPos[1]] = 2;
+					plays[jumpPos[0]][jumpPos[1]] = 2;	//if it is not empty, but the piece can jump over it, then set it to 2 to show that it is a jump
 					numMoves++;
 				}
 			}
@@ -522,7 +520,7 @@ public class GameLogic
 		return numMoves;
 	}
 
-	private int getDown(int col, int row, int[][] plays)
+	private int getDown(int col, int row, int[][] plays)	//for Blue pieces
 	{
 		if(row == NUM_TILES_PER_ROW-1)
 			return 0;
@@ -565,12 +563,12 @@ public class GameLogic
 		return gameData[col][row].getPlayer() == currentPlayer;
 	}
 
-	private boolean isLegalPos(int col, int row)
+	private boolean isLegalPos(int col, int row)	//if the position specifying is on the board
 	{
 		return !(row < 0 || row >= NUM_TILES_PER_ROW || col < 0 || col >= NUM_TILES_PER_ROW);
 	}
 
-	private int[] getJumpPos(int col, int row, int opponentCol, int opponentRow)
+	private int[] getJumpPos(int col, int row, int opponentCol, int opponentRow)	//depending on where the current piece and opponent are, what the position is for the jump
 	{
 		if(col > opponentCol && row > opponentRow && gameData[col-2][row-2] == null)
 			return new int[] {col-2, row-2};
@@ -583,10 +581,9 @@ public class GameLogic
 		else
 			return null;
 	}
-
-	public List<Move> getAllMoves()// for arraylist adding and looping is On, for linkedlist adding is O1 and looping is On
+	public List<Move> getAllMoves()	//returns a list of all possible moves for the player
 	{
-		List<Move> moves = new LinkedList<>();	//since looping over the full list, LinkedList is more efficient because and it has O(1) add. ArrayList (to add is O(n), otherwise O(1) to access an element) might need to be resized, so can be slower
+		List<Move> moves = new LinkedList<>();	//since looping over the full list and it has O(1) for adding
 
 		for(int row = 0; row < NUM_TILES_PER_ROW; row++)
 		{
@@ -646,7 +643,7 @@ public class GameLogic
 		return moves.size() == 0 || getCurrentPlayerScore() == 0 || getPlayerScore(currentPlayer.getOpposite()) == 0;
 	}
 
-	public Player getWinner()
+	public Player getWinner()	//fining who has won the game
 	{
 		if(!gameOver())
 			return null;

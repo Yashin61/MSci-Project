@@ -15,7 +15,7 @@ public class Move
 		this.isJump = isJump;
 	}
 
-	void makeMove(GameLogic gl, boolean repaint)
+	void makeMove(GameLogic gl, boolean repaint)	//making this move on a given board
 	{
 		gl.getAvailablePlays(colFrom, rowFrom);
 		gl.makeMove(colTo, rowTo, colFrom, rowFrom, repaint);
@@ -24,9 +24,9 @@ public class Move
 			new Thread(() -> BoardUI.getInstance().repaint()).start();
 	}
 
-	void makeMove(GameLogic gl)
+	void makeMove(GameLogic gl)	//for background checking
 	{
-		makeMove(gl, false);
+		makeMove(gl, false);	//it gets true when finishes the move and repaints the board
 	}
 
 	public boolean isJump()

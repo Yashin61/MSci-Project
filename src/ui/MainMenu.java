@@ -51,7 +51,7 @@ public class MainMenu
 
 		try
 		{
-			String path = "src/Instructions.txt";
+			String path = "Instructions.txt";	//for the purpose of working in .jar file, it has been put in this directory
 			File file = new File(path);
 			FileReader fr = new FileReader(file);
 
@@ -66,7 +66,7 @@ public class MainMenu
 		}
 
 		JFrame frame=new JFrame("Instructions");
-		Font font = new Font("", Font.BOLD, 11);
+		Font font = new Font("", Font.BOLD,11);
 		tp.setFont(font);
 		frame.pack();
 		frame.setSize(488,488);
@@ -134,6 +134,7 @@ public class MainMenu
 			}
 		});
 
+		//setting the buttons
 		JCheckBox forceJump = new JCheckBox("Force Jump");
 		forceJump.setSelected(MainMenu.forceJump);
 		JRadioButton humanFirst = new JRadioButton("Play First");
@@ -176,7 +177,7 @@ public class MainMenu
 		panel.add(humanVsComp);
 		int result = JOptionPane.showConfirmDialog(null, panel, "Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-		if(result == JOptionPane.OK_OPTION)
+		if(result == JOptionPane.OK_OPTION)	//sets the changes in the Settings menu by clicking the OK button
 		{
 			algorithm = (Algorithm)algorithms.getSelectedItem();
 			playFirst = humanFirst.isSelected();
@@ -208,7 +209,7 @@ public class MainMenu
 			frame.setLocationRelativeTo(null);
 		});
 
-		mainMenu.setVisible(false);
+		mainMenu.setVisible(false);	//once the game starts, the main menu disappears
 	}
 
 	private static void showMainMenu()	//for thread safety, this method should be invoked from the event-dispatching thread

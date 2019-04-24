@@ -8,9 +8,8 @@ import java.util.Random;
 
 public class MonteCarlo extends Algorithm
 {
-	// the way it works is sorting best moves to worst and tgen randomly picks one 2000 times to the win position or 150 dept
-	private static final double CHANCE = 0.5;
-	private static int checks = MainMenu.diff; // it looks at 2000 simulations in depth 150
+	private static final double CHANCE = 0.5;	//the chance of picking the first move from the list
+	private static int checks = MainMenu.diff;	//it looks at this many of simulations in depth 150
 	private static final int DEPTH = 150;
 	private static Random random = new Random();
 
@@ -22,25 +21,25 @@ public class MonteCarlo extends Algorithm
 	@Override
 	public Move getAIMove(GameLogic gl, int depth)
 	{
-		List<Move> moves = gl.getAllMoves();
-		List<TreeNode> nodes = new ArrayList<>(moves.size());
+		List<Move> moves = gl.getAllMoves();	//gets all the possible moves
+		List<TreeNode> nodes = new ArrayList<>(moves.size());	//creates nodes for each of the moves
 		int i = 0;
 
 		for(Move move : moves)
 		{
-			TreeNode node = new TreeNode(move,gl,i++);
+			TreeNode node = new TreeNode(move, gl, i++);
 			nodes.add(node);
 		}
 
-		nodes.sort(null);
+		nodes.sort(null);	//sorting by score according to alpha-beta
 		checks = 2000;
-		for(i = 0; i < checks; i++)
+		for(i = 0; i < checks; i++)	//going through them with more chance of picking the highest score
 		{
 			double picked = Math.random();
 			double currentChance = CHANCE;
 			for(int j = 0; j < nodes.size(); j++)
 			{
-				if (picked >= currentChance || j == nodes.size()-1)
+				if(picked >= currentChance || j == nodes.size()-1)
 				{
 					nodes.get(j).visit();
 					break;
@@ -48,15 +47,15 @@ public class MonteCarlo extends Algorithm
 				else
 					currentChance *= CHANCE;
 			}
-			if(i%10 == 9)
-				nodes.sort((o1,o2)-> Float.compare((o1.wins-o1.losses)/(float)o1.total, (o2.wins-o2.losses)/(float)o2.total));
+			if(i%10 == 9)	//at every 10 times doing that, sort the list again to make sure that the best moves are always at the top
+				nodes.sort((o1,o2) -> Float.compare((o1.wins-o1.losses)/(float)o1.total, (o2.wins-o2.losses)/(float)o2.total));
 		}
 		float max = Float.NEGATIVE_INFINITY;
 		TreeNode maxNode = null;
 
-		for(TreeNode node : nodes)
+		for(TreeNode node : nodes)	//going through all the nodes to find the one with greater wins/lost ratio
 		{
-			if(node.total < 30)
+			if(node.total < 30)	//if a node is visited less than 30 times, there is a chance to have bad move, so only consider the nodes visited more than 30 times
 				continue;
 			float score = (node.wins-node.losses) / (float)node.total;
 			if(score >= max)
@@ -66,10 +65,10 @@ public class MonteCarlo extends Algorithm
 			}
 		}
 
-		return maxNode.move;
+		return maxNode.move;	//pick the best move and return it
 	}
 
-	private static GameLogic.Player playRandomGame(GameLogic gl)
+	private static GameLogic.Player playRandomGame(GameLogic gl)	//picks random moves, and returns the player who won the game
 	{
 		List<Move> moves = gl.getAllMoves();
 
@@ -87,25 +86,26 @@ public class MonteCarlo extends Algorithm
 		{
 			gl = new GameLogic(gl, moves.get(random.nextInt(moves.size())));
 			moves = gl.getAllMoves();
-			depth --;
+			depth--;
 		}
 
-		if(moves.size() == 0)
-			return gl.getCurrentPlayer().getOpposite();
-		else
+		//checks who won
+		if(moves.size() == 0)	//if no moves i.e. no pieces or blocked, then current player loses
+			return gl.getCurrentPlayer().getOpposite();	//return the opposite player
+		else	//otherwise if the game not ended
 		{
 			float score = gl.getCurrentPlayerScore();
 
-			if(score > 2)
+			if(score > 2)	//it wins
 				return gl.getCurrentPlayer();
-			if(score < -2)
+			if(score < -2)	//it loses
 				return gl.getCurrentPlayer().getOpposite();
 
-			return null;
+			return null;	//if it is in between, then the game is drawn
 		}
 	}
 
-	private static float getScore(GameLogic gl, int depth, boolean maxing, float alpha, float beta)
+	private static float getScore(GameLogic gl, int depth, boolean maxing, float alpha, float beta)	//copy paste from AlphaBetaPruning.java
 	{
 		List<Move> moves = gl.getAllMoves();
 
@@ -123,7 +123,7 @@ public class MonteCarlo extends Algorithm
 			{
 				float score = getScore(new GameLogic(gl, move), depth-1, gl.isKingMove, alpha, beta);
 				best = Math.max(best, score);
-				alpha = Math.max(alpha, score);
+				alpha = Math.max(alpha, score);	//update alpha with maximum value
 
 				if(beta <= alpha)
 					break;
@@ -139,7 +139,7 @@ public class MonteCarlo extends Algorithm
 			{
 				float score = getScore(new GameLogic(gl, move), depth-1, !gl.isKingMove, alpha, beta);
 				best = Math.min(best, score);
-				beta = Math.min(beta, score);
+				beta = Math.min(beta, score);	//update beta with the minimum value
 
 				if(beta <= alpha)
 					break;
@@ -153,14 +153,14 @@ public class MonteCarlo extends Algorithm
 	{
 		int wins = 0;
 		int losses = 0;
-		int total = 0;
-		Move move;
+		int total = 0;	//total number of times it has been looked at
+		Move move;	//the move that the TreeNode instance represents
 		GameLogic gl;
 		float score;
-		int index;
-		GameLogic.Player me;
+		int index;	//index of which node it is
+		GameLogic.Player me;	//the player that this TreeNode represents
 
-		public TreeNode(Move move, GameLogic gl, int index)
+		public TreeNode(Move move, GameLogic gl, int index)	//every time a TreeNode is created, it gets the current score from alpha-beta for 5 levels deep
 		{
 			this.move = move;
 			me = gl.getCurrentPlayer();
@@ -169,32 +169,32 @@ public class MonteCarlo extends Algorithm
 			this.index = index;
 		}
 
-		public void visit()
+		public void visit()	//when visiting that node, it plays a random game
 		{
-			GameLogic.Player winner = playRandomGame(gl);
+			GameLogic.Player winner = playRandomGame(gl);	//gl is the current board
 
 			if(winner == me)
-				wins ++;
+				wins++;	//how many times this node wins
 			else if(winner != null)
-				losses ++;
+				losses++;
 
-			total ++;
+			total++;	//how many times looked at the node
 		}
 
 		public int compareTo(TreeNode other)
 		{
-			if(this == other)
+			if(this == other)	//this TreeNod comparing to other
 				return 0;
 
 			else
 			{
 				int compare = Float.compare(score, other.score);
 
-				if(compare == 0)
-					return other.index - index;
+				if(compare == 0)	//if the scores are the same
+					return other.index - index;	//still needed to sort. so, sort by index
 
 				else
-					return compare;
+					return compare;	//sort by score
 			}
 		}
 	}
